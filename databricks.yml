@@ -1,0 +1,35 @@
+bundle:
+  name: simple_etl_databricks
+
+include:
+  - resources/*.yml
+
+sync:
+  include:
+    - notebooks/**
+    - data/**
+
+variables:
+  catalog:
+    description: Unity Catalog for ETL tables
+    default: main
+  schema:
+    description: Schema for bronze/silver/gold tables
+    default: etl_demo
+  raw_data_path:
+    description: Workspace path to the raw CSV after bundle sync
+    default: /Workspace/${workspace.file_path}/data/raw/customers.csv
+
+targets:
+  dev:
+    mode: development
+    default: true
+    variables:
+      schema: etl_demo_dev
+
+  prod:
+    mode: production
+    workspace:
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      schema: etl_demo

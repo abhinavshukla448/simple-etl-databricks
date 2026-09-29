@@ -1,0 +1,9 @@
+.databricks/
+*.pyc
+__pycache__/
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/

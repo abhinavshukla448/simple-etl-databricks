@@ -1,0 +1,34 @@
+name: Databricks PR validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "databricks.yml"
+      - "resources/**"
+      - "notebooks/**"
+      - "data/**"
+      - ".github/workflows/**"
+
+concurrency:
+  group: databricks-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate bundle (dev)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Validate bundle configuration
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: databricks bundle validate -t dev

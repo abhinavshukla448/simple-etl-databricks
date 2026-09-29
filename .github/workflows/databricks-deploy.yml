@@ -1,0 +1,68 @@
+name: Databricks deploy and run
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "databricks.yml"
+      - "resources/**"
+      - "notebooks/**"
+      - "data/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Bundle target to deploy
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - prod
+      run_job:
+        description: Trigger the ETL workflow after deploy
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+concurrency:
+  group: databricks-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy bundle
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      BUNDLE_TARGET: ${{ github.event_name == 'workflow_dispatch' && inputs.target || 'prod' }}
+      RUN_JOB: ${{ github.event_name == 'workflow_dispatch' && inputs.run_job || 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Validate bundle
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: databricks bundle validate -t $BUNDLE_TARGET
+
+      - name: Deploy bundle to workspace
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: databricks bundle deploy -t $BUNDLE_TARGET
+
+      - name: Run ETL workflow job
+        if: env.RUN_JOB == 'true'
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: databricks bundle run -t $BUNDLE_TARGET simple_etl_workflow

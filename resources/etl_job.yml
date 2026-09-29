@@ -1,0 +1,35 @@
+resources:
+  jobs:
+    simple_etl_workflow:
+      name: simple_etl_workflow
+      description: Bronze → silver → gold customer ETL (serverless notebooks)
+      schedule:
+        quartz_cron_expression: "0 0 6 * * ?"
+        timezone_id: UTC
+        pause_status: PAUSED
+      tasks:
+        - task_key: extract
+          notebook_task:
+            notebook_path: ../notebooks/01_extract.py
+            base_parameters:
+              raw_path: ${var.raw_data_path}
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+        - task_key: transform
+          depends_on:
+            - task_key: extract
+          notebook_task:
+            notebook_path: ../notebooks/02_transform.py
+            base_parameters:
+              bronze_table: "{{tasks.extract.values.bronze_table}}"
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+        - task_key: load
+          depends_on:
+            - task_key: transform
+          notebook_task:
+            notebook_path: ../notebooks/03_load.py
+            base_parameters:
+              silver_table: "{{tasks.transform.values.silver_table}}"
+              catalog: ${var.catalog}
+              schema: ${var.schema}
