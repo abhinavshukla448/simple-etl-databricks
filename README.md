@@ -61,6 +61,16 @@ databricks bundle run -t dev simple_etl_workflow
 
 Copy `.env.example` to `.env` for local CLI use; never commit `.env`.
 
+## Publish to GitHub (one time)
+
+```bash
+brew install gh   # if needed
+gh auth login
+./scripts/publish-to-github.sh simple-etl-databricks public
+```
+
+Then in the repo on GitHub: **Settings → Secrets and variables → Actions** → add `DATABRICKS_HOST` and `DATABRICKS_TOKEN`.
+
 ## CI/CD with GitHub
 
 | Event | Workflow | What it does |
