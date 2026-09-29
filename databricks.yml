@@ -18,7 +18,7 @@ variables:
     default: etl_demo
   raw_data_path:
     description: Workspace path to the raw CSV after bundle sync
-    default: /Workspace/${workspace.file_path}/data/raw/customers.csv
+    default: ${workspace.file_path}/data/raw/customers.csv
 
 targets:
   dev:
